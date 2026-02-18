@@ -357,18 +357,7 @@ Bu proje aşağıdaki harika teknolojiler kullanılarak geliştirilmiştir:
 
 ---
 
-## 📞 İletişim
 
-Sorularınız için:
-- 📧 Email: [your-email@example.com]
-- 🐛 Issues: [GitHub Issues](https://github.com/your-repo/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/your-repo/discussions)
-
----
-
-<div align="center">
-
-**⭐ Bu projeyi beğendiyseniz yıldız vermeyi unutmayın!**
 
 Made with ❤️ using Bun + Elysia.js + React 19
 
