@@ -1818,20 +1818,3 @@ apps/web/src/routes/_authenticated/companies/
 
 ---
 
-## 📞 Yardım
-
-Takıldığın bir yer mi var?
-
-1. Teknik dökümanı oku: `Technical-Document-Sample.md`
-2. Mevcut modülleri incele: `apps/api/src/modules/*`
-3. Swagger dokümantasyonuna bak: `http://localhost:3000/swagger`
-4. Prisma Studio'yu kullan: `bun run prisma studio`
-5. Console log'ları kontrol et
-6. GitHub Issues'a bak
-
----
-
-**Başarılar! 🚀**
-
-Bu rehber, projeyi anlamak ve geliştirmeye başlamak için her şeyi içeriyor.
-Adım adım ilerle, acele etme, ve öğrenmenin tadını çıkar!
