@@ -1,0 +1,696 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "./client"
+
+  runtime                = "bun"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+generator prismabox {
+  provider                    = "prismabox"
+  // you can optionally specify the output location. Defaults to ./prismabox
+  output                      = "./prismabox"
+  // if you want, you can customize the imported variable name that is used for the schemes. Defaults to "Type" which is what the standard typebox package offers
+  typeboxImportVariableName   = "t"
+  // you also can specify the dependency from which the above import should happen. This is useful if a package re-exports the typebox package and you would like to use that
+  typeboxImportDependencyName = "elysia"
+  // by default the generated schemes do not allow additional properties. You can allow them by setting this to true
+  // additionalProperties        = true
+  // optionally enable the data model generation. See the data model section below for more info
+  inputModel                  = true
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+
+  @@map("gender")
+}
+
+enum RoleType {
+  BASIC // Default basic role - cannot be deleted
+  ADMIN // Default admin role - cannot be deleted
+  CUSTOM // Custom user-created roles - can be deleted
+
+  @@map("role_type")
+}
+
+enum OrganizationType {
+  COMPANY
+
+  @@map("organization_type")
+}
+
+enum UserScope {
+  SYSTEM  // System-level access (can access all companies and system features)
+  COMPANY // Company-level access (limited to their company memberships)
+
+  @@map("user_scope")
+}
+
+enum FileLibraryAssetType {
+  PRODUCT_IMAGE
+  USER_IMAGE
+  SCHOOL_LOGO
+  PRODUCT_BRAND_LOGO
+  SCHOOL_BRAND_LOGO
+
+  @@map("file_library_asset_type")
+}
+
+enum FileLibraryAssetFileType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+
+  @@map("file_library_asset_file_type")
+}
+
+enum FileLibraryAssetMimeType {
+  IMAGE_JPEG // image/jpeg
+  IMAGE_PNG // image/png
+  IMAGE_GIF // image/gif
+  IMAGE_WEBP // image/webp
+  IMAGE_SVG // image/svg+xml
+  IMAGE_BMP // image/bmp
+  IMAGE_TIFF // image/tiff
+
+  VIDEO_MP4 // video/mp4
+  VIDEO_AVI // video/avi
+  VIDEO_MPEG // video/mpeg
+  VIDEO_WEBM // video/webm
+  VIDEO_OGG // video/ogg
+
+  DOCUMENT_PDF // application/pdf
+  DOCUMENT_MSWORD // application/msword
+  DOCUMENT_DOCX // application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+  @@map("file_asset_mime_type")
+}
+
+model User {
+  id String @id @default(uuid())
+
+  /// @prismabox.options{minLength:3,maxLength:255}
+  email String @unique @db.VarChar(255)
+
+  /// @prismabox.options{minLength:2,maxLength:50}
+  firstName String @map("first_name") @db.VarChar(50)
+  /// @prismabox.options{minLength:2,maxLength:50}
+  lastName  String @map("last_name") @db.VarChar(50)
+  /// @prismabox.hide.input
+  name      String @map("full_name") @db.VarChar(101)
+
+  gender Gender
+
+  /// User's access scope - defines their primary role in the system
+  /// SYSTEM: System-level access (can access all companies and system features)
+  /// COMPANY: Company-level access (limited to their company memberships)
+  scope UserScope @default(COMPANY)
+
+  createdBy   User?   @relation("UserToCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  /// @prismabox.hide
+  createdById String? @map("created_by_id")
+
+  /// @prismabox.hide
+  /// User claims/permissions (cached for performance)
+  claims Json? @db.JsonB
+
+  /// @prismabox.hide
+  /// User roles: minimal info for quick access [{ uuid, organizationType?, organizationUuid? }]
+  roles Json? @db.JsonB
+
+  /// @prismabox.hide
+  /// User memberships cache (organization-agnostic, cached for performance)
+  /// Structure: [{ organizationUuid: string, organizationType: OrganizationType, isAdmin?: true, isOwner?: true, joinedAt: string }]
+  /// Note: isAdmin and isOwner are only included when true (to save space)
+  memberships Json? @db.JsonB
+
+  emailVerified Boolean
+
+  image      String?           @db.VarChar(255)
+  imageId    Int?              @map("image_id")
+  imageAsset FileLibraryAsset? @relation(fields: [imageId], references: [id])
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// @prismabox.input.hide
+  deletedAt DateTime? @map("deleted_at")
+
+  isBanned     Boolean?
+  banReason    String?
+  banExpiresAt DateTime?
+
+  createdUsers    User[]           @relation("UserToCreator")
+  auditLogs       AuditLog[]       @relation("AuditLogsToUser")
+  posts           Post[]           @relation("PostToUser")
+  userRoles       UserRole[]       @relation("UserRoleToUser")
+  sessions        Session[]
+  accounts        Account[]
+  impersonations  Session[]        @relation("SessionToImpersonatedBy")
+  userPermissions UserPermission[] @relation("UserToUserPermission")
+  company         Company[]        @relation("CompanyToOwner")
+  CompanyMember   CompanyMember[]  @relation("UserToCompanyMember")
+  projects        Project[]        @relation("ProjectToUser")
+
+  @@index([deletedAt])
+  @@index([scope])
+  @@map("users")
+}
+
+// Role - Kullanıcı rolleri (Global ve Organization-specific)
+// organizationType = null && organizationId = null -> GLOBAL role (tüm organizasyonlarda geçerli)
+// organizationType != null && organizationId != null -> Organization-specific role
+// Örnek: organizationType='COMPANY', organizationId=123 -> Sadece ID=123 olan COMPANY için geçerli
+model Role {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  /// @prismabox.options{minLength:2,maxLength:32}
+  name String @db.VarChar(32)
+
+  /// @prismabox.options{minLength:0,maxLength:255}
+  description String? @db.VarChar(255)
+
+  // Role type: BASIC, ADMIN (system defaults - cannot be deleted), CUSTOM (user-created)
+  type RoleType @default(CUSTOM)
+
+  // Organization scope - null means GLOBAL role
+  organizationId   Int?              @map("organization_id")
+  organizationUuid String?           @map("organization_uuid")
+  organizationType OrganizationType? @map("organization_type")
+
+  // Permission codes (hardcoded in constants.ts)
+  permissions Json @default("[]") @db.JsonB
+
+  /// Role hierarchy order
+  /// Higher order = more powerful role
+  /// Parallel hierarchies: global roles vs organization-specific roles
+  /// Users can only manage roles with lower order than their highest role
+  order Int @default(0)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// @prismabox.input.hide
+  deletedAt DateTime? @map("deleted_at")
+
+  userRoles UserRole[] @relation("UserRoleToRole")
+
+  @@unique([name, organizationId, organizationType], name: "role_unique_constraint")
+  @@unique([order, organizationId, organizationType], name: "role_order_unique_constraint")
+  @@index([organizationId, organizationType])
+  @@index([order, organizationType])
+  @@index([type])
+  @@map("roles")
+}
+
+// UserPermission - Kullanıcıya doğrudan atanan izinler (role-based permission'lara ek)
+// organizationType = null && organizationId = null -> GLOBAL permission
+// organizationType != null && organizationId != null -> Organization-specific permission
+model UserPermission {
+  /// @prismabox.hide
+  id Int @id @default(autoincrement())
+
+  userId String @map("user_id")
+  user   User   @relation("UserToUserPermission", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// @prismabox.options{minLength:2,maxLength:128}
+  permissionCode String @map("permission_code") @db.VarChar(128)
+
+  // Organization scope - null means GLOBAL permission
+  organizationId   Int?              @map("organization_id")
+  organizationType OrganizationType? @map("organization_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, permissionCode, organizationId, organizationType])
+  @@index([userId])
+  @@index([permissionCode])
+  @@index([organizationId, organizationType])
+  @@map("user_permissions")
+}
+
+model AuditLog {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  user   User   @relation("AuditLogsToUser", fields: [userId], references: [id])
+  /// @prismabox.hide
+  userId String @map("user_id")
+
+  actionType String @map("action_type")
+  entityType String @map("entity_type")
+  entityUuid String @map("entity_uuid")
+
+  /// @prismabox.options{minLength:0,maxLength:1024}
+  description String? @map("description") @db.Text
+
+  metadata Json? @db.JsonB
+
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+  userAgent String? @map("user_agent") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([actionType])
+  @@index([entityType])
+  @@index([entityUuid])
+  @@map("audit_logs")
+}
+
+model Post {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  /// @prismabox.options{minLength:2,maxLength:255}
+  title String @db.VarChar(255)
+
+  /// @prismabox.options{minLength:2}
+  content String @db.Text
+
+  author   User   @relation("PostToUser", fields: [authorId], references: [id], onDelete: Cascade)
+  /// @prismabox.hide
+  authorId String @map("author_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// @prismabox.input.hide
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([deletedAt])
+  @@map("posts")
+}
+
+model UserRole {
+  /// @prismabox.hide
+  id Int @id @default(autoincrement())
+
+  user   User   @relation("UserRoleToUser", fields: [userId], references: [id], onDelete: Cascade)
+  // We can't put prismabox.hide here because of bug
+  userId String @map("user_id")
+
+  role   Role @relation("UserRoleToRole", fields: [roleId], references: [id], onDelete: Cascade)
+  // We can't put prismabox.hide here because of bug
+  roleId Int  @map("role_id")
+
+  // Organization context (null for global roles)
+  organizationId   Int?              @map("organization_id")
+  organizationType OrganizationType? @map("organization_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, roleId, organizationId, organizationType])
+  @@index([roleId])
+  @@index([userId])
+  @@index([organizationId, organizationType])
+  @@map("user_roles")
+}
+
+model Session {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// @prismabox.hide
+  token String
+
+  impersonatedById String? @map("impersonated_by_id")
+  impersonatedBy   User?   @relation("SessionToImpersonatedBy", fields: [impersonatedById], references: [id], onDelete: SetNull)
+
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+
+  @@unique([token])
+  @@map("sessions")
+}
+
+model Account {
+  id         String @id @default(uuid())
+  accountId  String @map("account_id")
+  providerId String @map("provider_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  accessToken  String? @map("access_token")
+  refreshToken String? @map("refresh_token")
+
+  idToken  String? @map("id_token")
+  scope    String?
+  password String?
+
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String @id @default(uuid())
+  identifier String
+
+  value String
+
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime? @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+
+  @@map("verifications")
+}
+
+model Region {
+  id       Int  @id @default(autoincrement())
+  sourceId Int? @unique @map("source_id")
+
+  name String @unique
+
+  translations Json?
+  wikiDataId   String?  @map("wiki_data_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  countries  Country[]
+  subregions Subregion[]
+
+  @@map("regions")
+}
+
+model Subregion {
+  id       Int  @id @default(autoincrement())
+  sourceId Int? @unique @map("source_id")
+
+  name String @unique
+
+  translations Json?
+  wikiDataId   String?  @map("wiki_data_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  regionName String @map("region_name")
+  regionId   Int    @map("region_id")
+  region     Region @relation(fields: [regionId], references: [id])
+
+  countries Country[]
+
+  @@index([regionId])
+  @@map("subregions")
+}
+
+model Country {
+  id       Int  @id @default(autoincrement())
+  sourceId Int? @unique @map("source_id")
+
+  name           String
+  iso3           String  @unique @db.Char(3)
+  iso2           String  @unique @db.Char(2)
+  numericCode    String? @map("numeric_code") @db.Char(3)
+  phoneCode      String? @map("phone_code")
+  capital        String?
+  currency       String?
+  currencyName   String? @map("currency_name")
+  currencySymbol String? @map("currency_symbol")
+  tld            String?
+  native         String?
+
+  latitude     Decimal? @db.Decimal(10, 8)
+  longitude    Decimal? @db.Decimal(11, 8)
+  emoji        String?
+  emojiU       String?  @map("emoji_u")
+  timezones    Json?
+  translations Json?
+  wikiDataId   String?  @map("wiki_data_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  regionName String? @map("region_name")
+  regionId   Int?    @map("region_id")
+  region     Region? @relation(fields: [regionId], references: [id])
+
+  subregionName String?    @map("subregion_name")
+  subregionId   Int?       @map("subregion_id")
+  subregion     Subregion? @relation(fields: [subregionId], references: [id])
+
+  states State[]
+  cities City[]
+
+  @@index([regionId])
+  @@index([subregionId])
+  @@map("countries")
+}
+
+model State {
+  id       Int  @id @default(autoincrement())
+  sourceId Int? @unique @map("source_id")
+
+  name String
+
+  stateCode  String?  @map("state_code")
+  fipsCode   String?  @map("fips_code")
+  iso2       String?
+  type       String?
+  latitude   Decimal? @db.Decimal(10, 8)
+  longitude  Decimal? @db.Decimal(11, 8)
+  wikiDataId String?  @map("wiki_data_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  countryName String  @map("country_name")
+  countryCode String  @map("country_code") @db.Char(2)
+  countryId   Int     @map("country_id")
+  country     Country @relation(fields: [countryId], references: [id])
+
+  cities City[]
+
+  @@index([countryId])
+  @@map("states")
+}
+
+model City {
+  id       Int  @id @default(autoincrement())
+  sourceId Int? @unique @map("source_id")
+
+  name String
+
+  latitude   Decimal? @db.Decimal(10, 8)
+  longitude  Decimal? @db.Decimal(11, 8)
+  wikiDataId String?  @map("wiki_data_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stateName String @map("state_name")
+  stateCode String @map("state_code")
+  stateId   Int    @map("state_id")
+  state     State  @relation(fields: [stateId], references: [id])
+
+  countryCode String  @map("country_code")
+  countryName String  @map("country_name")
+  countryId   Int     @map("country_id")
+  country     Country @relation(fields: [countryId], references: [id])
+
+  @@index([stateId])
+  @@index([countryId])
+  @@map("cities")
+}
+
+model FileLibraryAsset {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  companyId   Int?     @map("company_id")
+  companyUuid String?  @map("company_uuid")
+  company     Company? @relation("CompanyToFileLibraryAsset", fields: [companyId], references: [id])
+
+  name  String  @map("name") @db.VarChar(512)
+  title String? @map("title") @db.VarChar(512)
+
+  type     FileLibraryAssetType     @map("type")
+  fileType FileLibraryAssetFileType @map("file_type")
+  mimeType FileLibraryAssetMimeType @map("mime_type")
+
+  size     BigInt @map("size") @db.BigInt
+  path     String @map("path") @db.VarChar(512)
+  metadata Json?  @map("metadata")
+
+  //Özellik eklenebilir
+  //uploaderId String? @map("uploader_id")
+  //uploader   User?   @relation(fields: [uploaderId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user User[]
+
+  @@map("file_library_assets")
+}
+
+// KvStore - Key-Value Store for caching and configuration
+model KvStore {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @default(uuid())
+  key         String    @db.VarChar(255)
+  value       Json
+  namespace   String    @default("default") @db.VarChar(100)
+  description String?   @db.VarChar(500)
+  tags        String[]  @default([])
+  expiresAt   DateTime? @map("expires_at")
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@unique([key, namespace])
+  @@index([key])
+  @@index([namespace])
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("kv_store")
+}
+
+model Company {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  name String @map("name") @db.VarChar(512)
+
+  logoFileId  Int?    @map("logo_file_id")
+  logoFileSrc String? @map("logo_file_src")
+
+  /// Organization owner - has wildcard (*) permissions
+  /// Owner cannot be removed until ownership is transferred
+  /// @prismabox.hide
+  ownerId   String? @map("owner_id")
+  ownerUuid String? @map("owner_uuid")
+  owner     User?   @relation("CompanyToOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  /// Reporting and statistics columns
+  membersCount Int @default(0) @map("members_count")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  fileLibraryAssets FileLibraryAsset[] @relation("CompanyToFileLibraryAsset")
+  members           CompanyMember[]    @relation("CompanyToCompanyMember")
+  projects          Project[]          @relation("ProjectToCompany")
+
+  @@index([ownerId])
+  @@map("companies")
+}
+
+// CompanyMember - Company'e özgü kullanıcı üyelikleri
+// Not: Bu tabloya atanan roller MUTLAKA organizationType='COMPANY' ve organizationId=companyId olmalıdır
+// Global roller (organizationType=null) bu tabloya atanamaz
+model CompanyMember {
+  /// @prismabox.hide
+  id Int @id @default(autoincrement())
+
+  userId String @map("user_id")
+  user   User   @relation("UserToCompanyMember", fields: [userId], references: [id], onDelete: Cascade)
+
+  companyId Int     @map("company_id")
+  company   Company @relation("CompanyToCompanyMember", fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// @prismabox.hide
+  /// Indicates if the user has at least one ADMIN type role in this company
+  isAdmin Boolean @default(false) @map("is_admin")
+
+  /// @prismabox.hide
+  /// Agent preferences: { global, liveChat, shortcuts, notifications }
+  preferences Json? @default("{}") @map("preferences") @db.JsonB
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@index([isAdmin])
+  @@index([deletedAt])
+  @@map("company_members")
+}
+
+// Project - Örnek CRUD modülü (Company-scoped)
+// Bu modül permission-based authorization örneğidir:
+// - projects:list-all / projects:show-all: Tüm projelere erişim
+// - projects:list-own-company / projects:show-own-company: Sadece üye olunan company'lerin projelerine erişim
+// - projects:create: Company'de proje oluşturma (company scope)
+// - projects:update-all / projects:delete-all: Tüm projeleri yönetme (global scope)
+// - projects:update-own-company / projects:delete-own-company: Üye olunan company'lerin projelerini yönetme (company scope)
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+
+  @@map("project_status")
+}
+
+model Project {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  /// @prismabox.options{minLength:2,maxLength:255}
+  name String @db.VarChar(255)
+
+  /// @prismabox.options{minLength:0,maxLength:1000}
+  description String? @db.Text
+
+  status ProjectStatus @default(DRAFT)
+
+  // Company scope - her proje bir company'ye ait
+  companyId   Int     @map("company_id")
+  companyUuid String  @map("company_uuid")
+  company     Company @relation("ProjectToCompany", fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Project creator
+  createdBy   User   @relation("ProjectToUser", fields: [createdById], references: [id], onDelete: SetNull)
+  /// @prismabox.hide
+  createdById String @map("created_by_id")
+
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// @prismabox.input.hide
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([createdById])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("projects")
+}

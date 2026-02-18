@@ -1,0 +1,16 @@
+{
+  "watch": ["src", "../../packages/database", ".env", "../../config/apps/api/.env"],
+  "ext": "ts,js,json,prisma",
+  "ignore": [
+    "node_modules",
+    "dist",
+    "*.test.ts",
+    "*.spec.ts",
+    "../../packages/database/client/**",
+    "../../packages/database/prismabox/**"
+  ],
+  "exec": "bun run src/index.ts",
+  "delay": 150,
+  "quiet": true,
+  "signal": "SIGUSR2"
+}
