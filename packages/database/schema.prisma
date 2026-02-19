@@ -168,6 +168,8 @@ model User {
   company         Company[]        @relation("CompanyToOwner")
   CompanyMember   CompanyMember[]  @relation("UserToCompanyMember")
   projects        Project[]        @relation("ProjectToUser")
+  createdTickets  Ticket[]         @relation("TicketToUser")
+  assignedTickets Ticket[]         @relation("TicketToAssignedAgent")
 
   @@index([deletedAt])
   @@index([scope])
@@ -603,6 +605,7 @@ model Company {
   fileLibraryAssets FileLibraryAsset[] @relation("CompanyToFileLibraryAsset")
   members           CompanyMember[]    @relation("CompanyToCompanyMember")
   projects          Project[]          @relation("ProjectToCompany")
+  tickets           Ticket[]           @relation("TicketToCompany")
 
   @@index([ownerId])
   @@map("companies")
@@ -657,6 +660,25 @@ enum ProjectStatus {
   @@map("project_status")
 }
 
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING
+  SOLVED
+  CLOSED
+
+  @@map("ticket_status")
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+
+  @@map("ticket_priority")
+}
+
 model Project {
   /// @prismabox.hide
   id   Int    @id @default(autoincrement())
@@ -693,4 +715,56 @@ model Project {
   @@index([status])
   @@index([deletedAt])
   @@map("projects")
+}
+
+// Ticket - Support ticket system (Company-scoped)
+// Zendesk-like ticket support system
+// Tickets are company-scoped and can be created by authenticated users
+model Ticket {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  /// @prismabox.options{minLength:2,maxLength:255}
+  subject String @db.VarChar(255)
+
+  /// @prismabox.options{minLength:2}
+  description String @db.Text
+
+  status   TicketStatus   @default(OPEN)
+  priority TicketPriority @default(NORMAL)
+
+  /// @prismabox.options{minLength:3,maxLength:255}
+  requesterEmail String @map("requester_email") @db.VarChar(255)
+
+  /// @prismabox.options{minLength:2,maxLength:100}
+  requesterName String @map("requester_name") @db.VarChar(100)
+
+  // Company scope - her ticket bir company'ye ait
+  companyId   Int     @map("company_id")
+  companyUuid String  @map("company_uuid")
+  company     Company @relation("TicketToCompany", fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Ticket creator (authenticated user who created the ticket)
+  createdBy   User?   @relation("TicketToUser", fields: [createdById], references: [id], onDelete: SetNull)
+  /// @prismabox.hide
+  createdById String? @map("created_by_id")
+
+  // Assigned agent (optional)
+  assignedTo   User?   @relation("TicketToAssignedAgent", fields: [assignedToId], references: [id], onDelete: SetNull)
+  /// @prismabox.hide
+  assignedToId String? @map("assigned_to_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// @prismabox.input.hide
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([deletedAt])
+  @@map("tickets")
 }

@@ -7,6 +7,7 @@ import { systemAdministrationController } from './system-administration';
 import { usersController } from './users';
 import { companiesController } from './companies';
 import projectsController from './projects';
+import { ticketsController } from './tickets';
 
 const app = new Elysia()
   .use(systemAdministrationController)
@@ -14,6 +15,7 @@ const app = new Elysia()
   .use(authController)
   .use(postsController)
   .use(projectsController)
+  .use(ticketsController)
   .use(locationsController)
   .use(companiesController)
   .use(fileLibraryAssetsController)
@@ -40,6 +42,7 @@ export const swaggerTags: { name: string; description: string }[] = [
   { name: 'Role', description: 'Role endpoints' },
   { name: 'Post', description: 'Post endpoints' },
   { name: 'Projects', description: 'Project management endpoints - demonstrates different permission levels (System Admin, Company Admin, Company Member)' },
+  { name: 'Ticket', description: 'Support ticket management endpoints - Zendesk-like ticket system with company-scoped permissions' },
   { name: 'Country', description: 'Country endpoints' },
   { name: 'State', description: 'State endpoints' },
   { name: 'City', description: 'City endpoints' },

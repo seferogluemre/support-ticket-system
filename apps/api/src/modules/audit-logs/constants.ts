@@ -15,4 +15,5 @@ export const AuditLogEntity = {
   USER_ROLE: 'UserRole',
   USER_PERMISSION: 'UserPermission',
   COMPANY: 'Company',
+  TICKET: 'Ticket',
 } as const satisfies Record<string, PrismaModelNamePascalCase>;

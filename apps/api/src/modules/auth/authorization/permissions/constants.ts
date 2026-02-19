@@ -351,6 +351,65 @@ export const PERMISSIONS = {
   },
 
   // ====================================================================
+  // 🎫 TICKET MANAGEMENT (Support Ticket System)
+  // ====================================================================
+  TICKETS: {
+    // Global scope permissions - Tüm company'lere erişim
+    LIST_ALL: {
+      key: 'tickets:list-all',
+      description: 'Tüm Ticketları Listele',
+      scopes: [GLOBAL],
+    },
+    SHOW_ALL: {
+      key: 'tickets:show-all',
+      description: 'Tüm Ticketları Görüntüle',
+      scopes: [GLOBAL],
+    },
+    UPDATE_ALL: {
+      key: 'tickets:update-all',
+      description: 'Tüm Ticketları Güncelle',
+      scopes: [GLOBAL],
+    },
+    DELETE_ALL: {
+      key: 'tickets:delete-all',
+      description: 'Tüm Ticketları Sil',
+      scopes: [GLOBAL],
+    },
+
+    // Company scope permissions - Sadece üye olunan company'lere erişim
+    LIST_OWN_COMPANY: {
+      key: 'tickets:list-own-company',
+      description: 'Üye Olunan Company Ticketlarını Listele',
+      scopes: [OrganizationType.COMPANY],
+    },
+    SHOW_OWN_COMPANY: {
+      key: 'tickets:show-own-company',
+      description: 'Üye Olunan Company Ticketlarını Görüntüle',
+      scopes: [OrganizationType.COMPANY],
+    },
+    CREATE: {
+      key: 'tickets:create',
+      description: 'Company\'de Ticket Oluştur',
+      scopes: [OrganizationType.COMPANY],
+    },
+    UPDATE_OWN_COMPANY: {
+      key: 'tickets:update-own-company',
+      description: 'Üye Olunan Company Ticketlarını Güncelle',
+      scopes: [OrganizationType.COMPANY],
+    },
+    DELETE_OWN_COMPANY: {
+      key: 'tickets:delete-own-company',
+      description: 'Üye Olunan Company Ticketlarını Sil',
+      scopes: [OrganizationType.COMPANY],
+    },
+    ASSIGN: {
+      key: 'tickets:assign',
+      description: 'Ticket Atama (Agent\'a)',
+      scopes: [OrganizationType.COMPANY],
+    },
+  },
+
+  // ====================================================================
   // 🌐 COMPANY MANAGEMENT
   // ====================================================================
   COMPANIES: {
@@ -507,6 +566,15 @@ export const PERMISSION_GROUPS = {
     key: 'projects',
     description: 'Proje Yönetimi',
     permissions: Object.values(PERMISSIONS.PROJECTS),
+  },
+
+  // ====================================================================
+  // 🎫 TICKET MANAGEMENT
+  // ====================================================================
+  TICKETS: {
+    key: 'tickets',
+    description: 'Ticket Yönetimi',
+    permissions: Object.values(PERMISSIONS.TICKETS),
   },
 
   // ====================================================================
