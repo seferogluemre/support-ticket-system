@@ -39,3 +39,20 @@ export interface TicketStats {
     urgent: number;
   };
 }
+
+export interface Reply {
+  id: string;
+  sender: string;
+  senderInitials: string;
+  content: string;
+  createdAt: Date;
+  isAgent: boolean;
+}
+
+export interface TicketEvent {
+  id: string;
+  actor: string;
+  actorInitials: string;
+  action: string;
+  createdAt: Date;
+}

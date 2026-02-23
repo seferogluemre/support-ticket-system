@@ -5,3 +5,7 @@ export * from './RecentTicketsTable';
 export * from './TicketListItem';
 export * from './TicketsList';
 export * from './TicketStatusFilter';
+export * from './TicketSidebarLeft';
+export * from './TicketSidebarRight';
+export * from './TicketChatArea';
+export * from './TicketPDF';
