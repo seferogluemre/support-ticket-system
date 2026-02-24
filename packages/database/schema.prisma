@@ -56,7 +56,7 @@ enum OrganizationType {
 }
 
 enum UserScope {
-  SYSTEM  // System-level access (can access all companies and system features)
+  SYSTEM // System-level access (can access all companies and system features)
   COMPANY // Company-level access (limited to their company memberships)
 
   @@map("user_scope")
@@ -606,6 +606,7 @@ model Company {
   members           CompanyMember[]    @relation("CompanyToCompanyMember")
   projects          Project[]          @relation("ProjectToCompany")
   tickets           Ticket[]           @relation("TicketToCompany")
+  tags              Tag[]              @relation("TagToCompany")
 
   @@index([ownerId])
   @@map("companies")
@@ -760,6 +761,8 @@ model Ticket {
   /// @prismabox.input.hide
   deletedAt DateTime? @map("deleted_at")
 
+  tags TicketTag[] @relation("TicketToTag")
+
   @@index([companyId])
   @@index([createdById])
   @@index([assignedToId])
@@ -767,4 +770,54 @@ model Ticket {
   @@index([priority])
   @@index([deletedAt])
   @@map("tickets")
+}
+
+// Tag - Ticket etiketleme sistemi (Company-scoped)
+// Her ticket birden fazla etikete sahip olabilir (many-to-many via TicketTag)
+model Tag {
+  /// @prismabox.hide
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  /// @prismabox.options{minLength:1,maxLength:50}
+  name String @db.VarChar(50)
+
+  /// @prismabox.options{minLength:4,maxLength:7}
+  color String? @db.VarChar(7) // hex renk kodu, örn: #FF5733
+
+  // Company scope - her tag bir company'ye ait
+  companyId   Int     @map("company_id")
+  companyUuid String  @map("company_uuid")
+  company     Company @relation("TagToCompany", fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  /// @prismabox.input.hide
+  deletedAt DateTime? @map("deleted_at")
+
+  tickets TicketTag[] @relation("TicketTagToTag")
+
+  @@unique([name, companyId])
+  @@index([companyId])
+  @@index([deletedAt])
+  @@map("tags")
+}
+
+// TicketTag - Ticket ve Tag arasındaki many-to-many junction tablosu
+model TicketTag {
+  /// @prismabox.hide
+  id Int @id @default(autoincrement())
+
+  ticketId Int    @map("ticket_id")
+  ticket   Ticket @relation("TicketToTag", fields: [ticketId], references: [id], onDelete: Cascade)
+
+  tagId Int @map("tag_id")
+  tag   Tag @relation("TicketTagToTag", fields: [tagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([ticketId, tagId])
+  @@index([ticketId])
+  @@index([tagId])
+  @@map("ticket_tags")
 }
