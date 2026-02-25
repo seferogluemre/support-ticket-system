@@ -49,7 +49,7 @@ export abstract class TagsService {
 
       return { data, total };
     } catch (error) {
-      throw await this.handlePrismaError(error, "find");
+      throw this.handlePrismaError(error, "find");
     }
   }
 
@@ -65,50 +65,74 @@ export abstract class TagsService {
 
       return tag;
     } catch (error) {
-      throw await this.handlePrismaError(error, "find");
+      throw this.handlePrismaError(error, "find");
     }
   }
 
   static async store(data: TagCreatePayload) {
     try {
+      // companyUuid'den companyId'yi resolve et (Ticket ile aynı pattern)
+      const company = await prisma.company.findUnique({
+        where: { uuid: data.companyUuid, deletedAt: null },
+        select: { id: true, uuid: true },
+      });
+
+      if (!company) {
+        throw new NotFoundException("Company bulunamadı");
+      }
+
       return await prisma.tag.create({
-        data,
+        data: {
+          name: data.name,
+          color: data.color,
+          companyId: company.id,
+          companyUuid: company.uuid,
+        },
       });
     } catch (error) {
-      throw await this.handlePrismaError(error, "create");
+      throw this.handlePrismaError(error, "create");
     }
   }
 
-  static async update(uuid: string, data: TagUpdatePayload) {
+  static async update(
+    uuid: string,
+    companyUuid: string,
+    data: TagUpdatePayload,
+  ) {
+    try {
+      // companyUuid'yi data'dan çıkar -- sadece yetki doğrulaması için geldi, güncellenmez
+      const { companyUuid: _companyUuid, ...updateData } =
+        data as TagUpdatePayload & { companyUuid: string };
+
+      const tag = await prisma.tag.update({
+        where: { uuid, companyUuid, deletedAt: null },
+        data: updateData,
+      });
+
+      if (!tag) {
+        throw new NotFoundException("Etiket bulunamıyor");
+      }
+
+      return tag;
+    } catch (error) {
+      throw this.handlePrismaError(error, "update");
+    }
+  }
+
+  static async destroy(uuid: string, companyUuid: string) {
     try {
       const tag = await prisma.tag.update({
-        where: { uuid, deletedAt: null },
-        data,
+        where: { uuid, companyUuid, deletedAt: null },
+        data: { deletedAt: new Date() },
       });
 
       if (!tag) {
-        throw new NotFoundException("Etiket bulunamadı");
+        throw new NotFoundException("Etiket bulunamıyor");
       }
 
       return tag;
     } catch (error) {
-      throw await this.handlePrismaError(error, "update");
-    }
-  }
-
-  static async destroy(uuid: string) {
-    try {
-      const tag = await prisma.tag.delete({
-        where: { uuid },
-      });
-
-      if (!tag) {
-        throw new NotFoundException("Etiket bulunamadı");
-      }
-
-      return tag;
-    } catch (error) {
-      throw await this.handlePrismaError(error, "delete");
+      throw this.handlePrismaError(error, "delete");
     }
   }
 }

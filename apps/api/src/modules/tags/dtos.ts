@@ -32,7 +32,12 @@ export const tagIndexDto = {
 } satisfies ControllerHook;
 
 export const tagCreateDto = {
-  body: TagPlainInputCreate,
+  body: t.Composite([
+    TagPlainInputCreate,
+    t.Object({
+      companyUuid: uuidValidation,
+    }),
+  ]),
   response: { 200: tagResponseDto, 422: errorResponseDto[422] },
   detail: {
     summary: "Create",
@@ -44,7 +49,12 @@ export const tagUpdateDto = {
   params: t.Object({
     uuid: uuidValidation,
   }),
-  body: TagPlainInputUpdate,
+  body: t.Composite([
+    TagPlainInputUpdate,
+    t.Object({
+      companyUuid: uuidValidation,
+    }),
+  ]),
   response: {
     200: tagResponseDto,
     404: errorResponseDto[404],
@@ -69,6 +79,9 @@ export const tagShowDto = {
 
 export const tagDestroyDto = {
   ...tagShowDto,
+  body: t.Object({
+    companyUuid: uuidValidation,
+  }),
   response: {
     200: t.Object({ message: t.String() }),
     404: errorResponseDto[404],

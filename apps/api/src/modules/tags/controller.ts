@@ -14,7 +14,7 @@ import { TagFormatter } from "./formatters";
 import { TagsService } from "./service";
 
 const app = new Elysia({ prefix: "/tags", tags: ["Tag"] })
-  .use(auth())
+  .use(auth()) // ── Public GET endpoints (authentication gerekmez) ──────────────────
   .get(
     "/",
     async ({ query }) => {
@@ -26,7 +26,7 @@ const app = new Elysia({ prefix: "/tags", tags: ["Tag"] })
         formatter: TagFormatter.response,
       });
     },
-    dtoWithMiddlewares(tagIndexDto, withPermission(PERMISSIONS.TAGS.LIST_ALL)),
+    tagIndexDto,
   )
   .get(
     "/:uuid",
@@ -35,8 +35,10 @@ const app = new Elysia({ prefix: "/tags", tags: ["Tag"] })
       if (!tag) throw new NotFoundException("Etiket bulunamadı");
       return TagFormatter.response(tag);
     },
-    dtoWithMiddlewares(tagShowDto, withPermission(PERMISSIONS.TAGS.SHOW_ALL)),
+    tagShowDto,
   )
+  // ── Protected endpoints (authentication + permission gerekir) ────────
+
   .post(
     "/",
     async ({ body }) => {
@@ -63,13 +65,13 @@ const app = new Elysia({ prefix: "/tags", tags: ["Tag"] })
   .put(
     "/:uuid",
     async ({ params, body }) => {
-      const tag = await TagsService.update(params.uuid, body);
+      const tag = await TagsService.update(params.uuid, body.companyUuid, body);
       if (!tag) throw new NotFoundException("Etiket bulunamadı");
       return TagFormatter.response(tag);
     },
     dtoWithMiddlewares(
       tagUpdateDto,
-      withPermission(PERMISSIONS.TAGS.UPDATE_ALL),
+      withPermission(PERMISSIONS.TAGS.UPDATE_OWN_COMPANY),
       withAuditLog({
         actionType: AuditLogAction.UPDATE,
         entityType: AuditLogEntity.TAG,
@@ -82,14 +84,14 @@ const app = new Elysia({ prefix: "/tags", tags: ["Tag"] })
   )
   .delete(
     "/:uuid",
-    async ({ params }) => {
-      const tag = await TagsService.destroy(params.uuid);
+    async ({ params, body }) => {
+      const tag = await TagsService.destroy(params.uuid, body.companyUuid);
       if (!tag) throw new NotFoundException("Etiket bulunamadı");
       return { message: "Etiket başarıyla silindi" };
     },
     dtoWithMiddlewares(
       tagDestroyDto,
-      withPermission(PERMISSIONS.TAGS.DELETE_ALL),
+      withPermission(PERMISSIONS.TAGS.DELETE_OWN_COMPANY),
       withAuditLog({
         actionType: AuditLogAction.DELETE,
         entityType: AuditLogEntity.TAG,
