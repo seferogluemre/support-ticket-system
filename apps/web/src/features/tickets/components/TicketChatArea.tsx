@@ -7,7 +7,7 @@ import { ScrollArea } from '#/components/ui/scroll-area';
 import { Textarea } from '#/components/ui/textarea';
 import { format, formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { History, MessageSquare, Send, Zap, MoreHorizontal, FileText, Printer } from 'lucide-react';
+import { History, MessageSquare, Send, Zap, MoreHorizontal, FileText, Printer, List } from 'lucide-react';
 import { PDFViewer } from '@react-pdf/renderer';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { TicketPDF } from './TicketPDF';
@@ -56,6 +56,27 @@ export function TicketChatArea({
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
+                    {/* Summary Popover Toggle Button */}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2 text-xs shadow-sm bg-background hover:bg-muted"
+                                title="Bilet Özeti"
+                            >
+                                <List className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-[300px] p-4 space-y-2">
+                            <h4 className="font-semibold text-sm">Bilet Özeti</h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                {ticket.description?.substring(0, 150) || "Bu bilet için henüz bir özet oluşturulmadı."}
+                                {ticket.description && ticket.description.length > 150 ? "..." : ""}
+                            </p>
+                        </PopoverContent>
+                    </Popover>
+
                     {/* Event History Toggle Button */}
                     <Button
                         variant={viewMode === 'events' ? 'secondary' : 'outline'}

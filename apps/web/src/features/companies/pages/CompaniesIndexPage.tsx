@@ -13,7 +13,7 @@ import {
 import { useCompanyContext } from "#/context/company-context";
 import { useSidebarType } from "#/hooks/use-sidebar-type";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Edit, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowRight, Edit, Plus, Search, Trash2, Eye } from "lucide-react";
 import { useMemo, useState } from "react";
 import { companiesColumns } from "../columns";
 import { useCompanies } from "../hooks";
@@ -97,6 +97,20 @@ export default function CompaniesPage() {
                                     >
                                         <ArrowRight className="w-4 h-4" />
                                     </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                            navigate({
+                                                to: "/companies/$companyUuid/view",
+                                                params: { companyUuid: company.uuid },
+                                            })
+                                        }
+                                        className="text-indigo-600 hover:text-indigo-800"
+                                        title="Şirket Detayı"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Button>
 
                                     <Button
                                         variant="ghost"
@@ -133,82 +147,82 @@ export default function CompaniesPage() {
     return (
         <PageContainer>
             <div className="flex flex-col space-y-6">
-            {/* Header */}
-            <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Companies</h1>
+                {/* Header */}
+                <div className="flex flex-col space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-2xl font-bold">Companies</h1>
+                    </div>
+                    <p className="text-muted-foreground">
+                        Manage your companies. Create, update, and track company information
+                        and their owners.
+                    </p>
                 </div>
-                <p className="text-muted-foreground">
-                    Manage your companies. Create, update, and track company information
-                    and their owners.
-                </p>
-            </div>
 
-            {/* Controls */}
-            <div className="flex items-center justify-between gap-4">
-                <Button
-                    className="bg-blue-500 hover:bg-blue-600"
-                    onClick={handleCreateCompany}
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Company
-                </Button>
-
-                <div className="flex items-center gap-4">
-                    <Select
-                        value={sortBy}
-                        onValueChange={(value) =>
-                            setSortBy(value === "none" ? undefined : value)
-                        }
+                {/* Controls */}
+                <div className="flex items-center justify-between gap-4">
+                    <Button
+                        className="bg-blue-500 hover:bg-blue-600"
+                        onClick={handleCreateCompany}
                     >
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">No sorting</SelectItem>
-                            <SelectItem value="name">Name</SelectItem>
-                            <SelectItem value="createdAt">Created Date</SelectItem>
-                            <SelectItem value="updatedAt">Updated Date</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Company
+                    </Button>
 
-                    <Select
-                        value={sortOrder}
-                        onValueChange={(value: "asc" | "desc") =>
-                            setSortOrder(value)
-                        }
-                    >
-                        <SelectTrigger className="w-[140px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="asc">Ascending</SelectItem>
-                            <SelectItem value="desc">Descending</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-4">
+                        <Select
+                            value={sortBy}
+                            onValueChange={(value) =>
+                                setSortBy(value === "none" ? undefined : value)
+                            }
+                        >
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No sorting</SelectItem>
+                                <SelectItem value="name">Name</SelectItem>
+                                <SelectItem value="createdAt">Created Date</SelectItem>
+                                <SelectItem value="updatedAt">Updated Date</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search companies..."
-                            className="pl-9 w-80"
-                            value={searchKeyword}
-                            onChange={(e) => setSearchKeyword(e.target.value)}
-                        />
+                        <Select
+                            value={sortOrder}
+                            onValueChange={(value: "asc" | "desc") =>
+                                setSortOrder(value)
+                            }
+                        >
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="asc">Ascending</SelectItem>
+                                <SelectItem value="desc">Descending</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search companies..."
+                                className="pl-9 w-80"
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Table */}
-            <Card>
-                <CardContent className="p-0">
-                    <DataTable
-                        columns={columnsWithActions}
-                        data={companies || []}
-                        isLoading={isLoading}
-                    />
-                </CardContent>
-            </Card>
+                {/* Table */}
+                <Card>
+                    <CardContent className="p-0">
+                        <DataTable
+                            columns={columnsWithActions}
+                            data={companies || []}
+                            isLoading={isLoading}
+                        />
+                    </CardContent>
+                </Card>
             </div>
         </PageContainer>
     );

@@ -53,6 +53,7 @@ import { Route as AuthenticatedDemoSettingsNotificationsRouteImport } from './ro
 import { Route as AuthenticatedDemoSettingsDisplayRouteImport } from './routes/_authenticated/demo/settings/display'
 import { Route as AuthenticatedDemoSettingsAppearanceRouteImport } from './routes/_authenticated/demo/settings/appearance'
 import { Route as AuthenticatedDemoSettingsAccountRouteImport } from './routes/_authenticated/demo/settings/account'
+import { Route as AuthenticatedCompaniesCompanyUuidViewRouteImport } from './routes/_authenticated/companies/$companyUuid/view'
 import { Route as AuthenticatedCompaniesCompanyUuidRolesIndexRouteImport } from './routes/_authenticated/companies/$companyUuid/roles/index'
 import { Route as AuthenticatedCompaniesCompanyUuidRolesCreateRouteImport } from './routes/_authenticated/companies/$companyUuid/roles/create'
 import { Route as AuthenticatedCompaniesCompanyUuidRolesUuidRouteImport } from './routes/_authenticated/companies/$companyUuid/roles/$uuid'
@@ -304,6 +305,12 @@ const AuthenticatedDemoSettingsAccountRoute =
     path: '/account',
     getParentRoute: () => AuthenticatedDemoSettingsRouteRoute,
   } as any)
+const AuthenticatedCompaniesCompanyUuidViewRoute =
+  AuthenticatedCompaniesCompanyUuidViewRouteImport.update({
+    id: '/companies/$companyUuid/view',
+    path: '/companies/$companyUuid/view',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCompaniesCompanyUuidRolesIndexRoute =
   AuthenticatedCompaniesCompanyUuidRolesIndexRouteImport.update({
     id: '/companies/$companyUuid/roles/',
@@ -356,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/posts': typeof AuthenticatedPostsIndexRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/companies/$companyUuid/view': typeof AuthenticatedCompaniesCompanyUuidViewRoute
   '/demo/settings/account': typeof AuthenticatedDemoSettingsAccountRoute
   '/demo/settings/appearance': typeof AuthenticatedDemoSettingsAppearanceRoute
   '/demo/settings/display': typeof AuthenticatedDemoSettingsDisplayRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByTo {
   '/posts': typeof AuthenticatedPostsIndexRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/companies/$companyUuid/view': typeof AuthenticatedCompaniesCompanyUuidViewRoute
   '/demo/settings/account': typeof AuthenticatedDemoSettingsAccountRoute
   '/demo/settings/appearance': typeof AuthenticatedDemoSettingsAppearanceRoute
   '/demo/settings/display': typeof AuthenticatedDemoSettingsDisplayRoute
@@ -452,6 +461,7 @@ export interface FileRoutesById {
   '/_authenticated/posts/': typeof AuthenticatedPostsIndexRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/companies/$companyUuid/view': typeof AuthenticatedCompaniesCompanyUuidViewRoute
   '/_authenticated/demo/settings/account': typeof AuthenticatedDemoSettingsAccountRoute
   '/_authenticated/demo/settings/appearance': typeof AuthenticatedDemoSettingsAppearanceRoute
   '/_authenticated/demo/settings/display': typeof AuthenticatedDemoSettingsDisplayRoute
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/posts'
     | '/projects'
     | '/users'
+    | '/companies/$companyUuid/view'
     | '/demo/settings/account'
     | '/demo/settings/appearance'
     | '/demo/settings/display'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/posts'
     | '/projects'
     | '/users'
+    | '/companies/$companyUuid/view'
     | '/demo/settings/account'
     | '/demo/settings/appearance'
     | '/demo/settings/display'
@@ -596,6 +608,7 @@ export interface FileRouteTypes {
     | '/_authenticated/posts/'
     | '/_authenticated/projects/'
     | '/_authenticated/users/'
+    | '/_authenticated/companies/$companyUuid/view'
     | '/_authenticated/demo/settings/account'
     | '/_authenticated/demo/settings/appearance'
     | '/_authenticated/demo/settings/display'
@@ -931,6 +944,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDemoSettingsAccountRouteImport
       parentRoute: typeof AuthenticatedDemoSettingsRouteRoute
     }
+    '/_authenticated/companies/$companyUuid/view': {
+      id: '/_authenticated/companies/$companyUuid/view'
+      path: '/companies/$companyUuid/view'
+      fullPath: '/companies/$companyUuid/view'
+      preLoaderRoute: typeof AuthenticatedCompaniesCompanyUuidViewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/companies/$companyUuid/roles/': {
       id: '/_authenticated/companies/$companyUuid/roles/'
       path: '/companies/$companyUuid/roles'
@@ -1023,6 +1043,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPostsIndexRoute: typeof AuthenticatedPostsIndexRoute
   AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
+  AuthenticatedCompaniesCompanyUuidViewRoute: typeof AuthenticatedCompaniesCompanyUuidViewRoute
   AuthenticatedDemoAppsIndexRoute: typeof AuthenticatedDemoAppsIndexRoute
   AuthenticatedDemoChatsIndexRoute: typeof AuthenticatedDemoChatsIndexRoute
   AuthenticatedDemoHelpCenterIndexRoute: typeof AuthenticatedDemoHelpCenterIndexRoute
@@ -1058,6 +1079,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPostsIndexRoute: AuthenticatedPostsIndexRoute,
   AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
+  AuthenticatedCompaniesCompanyUuidViewRoute:
+    AuthenticatedCompaniesCompanyUuidViewRoute,
   AuthenticatedDemoAppsIndexRoute: AuthenticatedDemoAppsIndexRoute,
   AuthenticatedDemoChatsIndexRoute: AuthenticatedDemoChatsIndexRoute,
   AuthenticatedDemoHelpCenterIndexRoute: AuthenticatedDemoHelpCenterIndexRoute,

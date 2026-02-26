@@ -12,6 +12,16 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Mail } from 'lucide-react';
 import { TicketStatus, Ticket } from '../types';
+import { useState } from 'react';
+import { Textarea } from '#/components/ui/textarea';
+import { Button } from '#/components/ui/button';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '#/components/ui/accordion';
+
+// Mock previous tickets for Activity History
+const MOCK_PAST_TICKETS = [
+    { id: '#1023', subject: 'Şifremi unuttum', date: '2023-11-10', status: 'Çözüldü' },
+    { id: '#984', subject: 'Ödeme alınamadı hatası', date: '2023-09-05', status: 'Kapalı' },
+];
 
 interface TicketSidebarRightProps {
     ticket: Ticket;
@@ -26,8 +36,18 @@ export function TicketSidebarRight({
     onStatusChange,
     getInitials,
 }: TicketSidebarRightProps) {
+    const [note, setNote] = useState('');
+    const [savedNotes, setSavedNotes] = useState<string[]>([]);
+
+    const handleSaveNote = () => {
+        if (note.trim()) {
+            setSavedNotes([note, ...savedNotes]);
+            setNote('');
+        }
+    };
+
     return (
-        <div className="w-full lg:w-[260px] flex-shrink-0 p-4 border-l bg-muted/10">
+        <div className="w-full lg:w-[260px] flex-shrink-0 p-4 border-l bg-muted/10 overflow-y-auto">
             <div className="flex items-center gap-3 mb-5">
                 <Avatar className="h-10 w-10 border shadow-sm">
                     <AvatarFallback className="text-xs bg-blue-500 text-white font-medium">
@@ -42,7 +62,7 @@ export function TicketSidebarRight({
                 </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5 pt-1">
                 {/* Contact Information */}
                 <div className="space-y-3">
                     <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">İletişim</Label>
@@ -65,6 +85,31 @@ export function TicketSidebarRight({
                         <span className="text-[11px] text-muted-foreground flex-shrink-0 w-3.5 text-center">🌐</span>
                         <p className="text-xs text-foreground/80">Türkçe</p>
                     </div>
+                </div>
+
+                <Separator className="bg-border/50" />
+
+                {/* Notes Section */}
+                <div className="space-y-2">
+                    <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Notlar</Label>
+                    <Textarea
+                        placeholder="Kullanıcıya dair not ekleyin..."
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="h-20 text-xs resize-none"
+                    />
+                    <Button variant="secondary" size="sm" className="w-full text-xs h-7" onClick={handleSaveNote}>
+                        Notu Kaydet
+                    </Button>
+                    {savedNotes.length > 0 && (
+                        <div className="mt-2 space-y-2 max-h-32 overflow-y-auto">
+                            {savedNotes.map((n, idx) => (
+                                <div key={idx} className="bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded text-xs text-foreground/80 border border-yellow-200 dark:border-yellow-900/50">
+                                    {n}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <Separator className="bg-border/50" />
@@ -111,6 +156,37 @@ export function TicketSidebarRight({
                             </span>
                         </div>
                     </div>
+                </div>
+
+                <Separator className="bg-border/50" />
+
+                {/* Activity History Accordion */}
+                <div className="space-y-2 pb-4">
+                    <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Geçmiş İşlemler</Label>
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="activity-history" className="border-b-0">
+                            <AccordionTrigger className="hover:no-underline py-2 text-xs font-medium text-foreground/80 hover:text-foreground">
+                                Aktivite Geçmişi
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <div className="space-y-3 pt-2">
+                                    {MOCK_PAST_TICKETS.map(t => (
+                                        <div key={t.id} className="text-xs space-y-1 bg-background p-2 rounded border shadow-sm">
+                                            <div className="flex justify-between font-medium">
+                                                <span className="text-indigo-600 dark:text-indigo-400">{t.id}</span>
+                                                <span className="text-muted-foreground">{t.date}</span>
+                                            </div>
+                                            <div className="truncate text-foreground/90">{t.subject}</div>
+                                            <div className="text-[10px] text-muted-foreground pt-1 flex items-center gap-1">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${t.status === 'Çözüldü' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                                                {t.status}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </div>
 
             </div>
