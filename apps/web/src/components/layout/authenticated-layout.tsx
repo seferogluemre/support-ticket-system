@@ -1,6 +1,7 @@
 import { Outlet } from '@tanstack/react-router';
 import Cookies from 'js-cookie';
 import { AppSidebar } from '#/components/layout/app-sidebar';
+import { Navbar } from '#/components/layout/navbar';
 import { SidebarProvider } from '#/components/ui/sidebar';
 import { SearchProvider } from '#/context/search-context';
 import { cn } from '#/lib/utils';
@@ -24,6 +25,7 @@ export function AuthenticatedLayout({ children }: Props) {
             'flex h-svh flex-col',
           )}
         >
+          <Navbar />
           {children ? children : <Outlet />}
         </main>
       </SidebarProvider>
