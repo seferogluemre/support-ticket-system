@@ -47,6 +47,11 @@ export const sidebarData: SidebarData = {
           url: '/',
           icon: IconLayoutDashboard,
         },
+        {
+          title: 'Customers',
+          url: '/customers',
+          icon: IconUsers,
+        },
       ],
     },
     {

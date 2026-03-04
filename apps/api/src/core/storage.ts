@@ -17,5 +17,5 @@ export const STORAGE_BASE_PATH = '../../storage';
  * @returns Absolute path on filesystem
  */
 export const getStoragePath = (...relativePath: string[]): string => {
-  return path.join(process.cwd(), STORAGE_BASE_PATH, ...relativePath);
+  return path.resolve(process.cwd(), STORAGE_BASE_PATH, ...relativePath);
 };

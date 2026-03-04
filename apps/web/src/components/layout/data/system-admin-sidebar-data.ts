@@ -41,6 +41,11 @@ export const systemAdminSidebarData: SidebarData = {
           icon: IconUsers,
         },
         {
+          title: 'Customers',
+          url: '/customers',
+          icon: IconUsers,
+        },
+        {
           title: 'Posts',
           url: '/posts',
           icon: IconArticle,

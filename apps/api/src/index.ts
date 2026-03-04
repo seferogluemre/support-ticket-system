@@ -32,12 +32,12 @@ const app = new Elysia({
 })
   .use(cors())
   .onError(handleElysiaError)
-  .use(
-    staticPlugin({
-      assets: getStoragePath(),
-      prefix: '/storage',
-    }),
-  )
+  // .use(
+  //   staticPlugin({
+  //     assets: '../../storage',
+  //     prefix: '/storage',
+  //   }),
+  // )
   .use(routes)
   .group('', (app) =>
     app.guard(authSwagger, (app) =>

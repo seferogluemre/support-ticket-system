@@ -27,6 +27,7 @@ import { Route as AuthenticatedPostsIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedLocationsIndexRouteImport } from './routes/_authenticated/locations/index'
 import { Route as AuthenticatedGlobalRolesIndexRouteImport } from './routes/_authenticated/global-roles/index'
 import { Route as AuthenticatedFileLibraryIndexRouteImport } from './routes/_authenticated/file-library/index'
+import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers/index'
 import { Route as AuthenticatedCompanyRolesIndexRouteImport } from './routes/_authenticated/company-roles/index'
 import { Route as AuthenticatedCompanyMembersIndexRouteImport } from './routes/_authenticated/company-members/index'
 import { Route as AuthenticatedCompaniesIndexRouteImport } from './routes/_authenticated/companies/index'
@@ -148,6 +149,12 @@ const AuthenticatedFileLibraryIndexRoute =
   AuthenticatedFileLibraryIndexRouteImport.update({
     id: '/file-library/',
     path: '/file-library/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCustomersIndexRoute =
+  AuthenticatedCustomersIndexRouteImport.update({
+    id: '/customers/',
+    path: '/customers/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCompanyRolesIndexRoute =
@@ -357,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/companies': typeof AuthenticatedCompaniesIndexRoute
   '/company-members': typeof AuthenticatedCompanyMembersIndexRoute
   '/company-roles': typeof AuthenticatedCompanyRolesIndexRoute
+  '/customers': typeof AuthenticatedCustomersIndexRoute
   '/file-library': typeof AuthenticatedFileLibraryIndexRoute
   '/global-roles': typeof AuthenticatedGlobalRolesIndexRoute
   '/locations': typeof AuthenticatedLocationsIndexRoute
@@ -404,6 +412,7 @@ export interface FileRoutesByTo {
   '/companies': typeof AuthenticatedCompaniesIndexRoute
   '/company-members': typeof AuthenticatedCompanyMembersIndexRoute
   '/company-roles': typeof AuthenticatedCompanyRolesIndexRoute
+  '/customers': typeof AuthenticatedCustomersIndexRoute
   '/file-library': typeof AuthenticatedFileLibraryIndexRoute
   '/global-roles': typeof AuthenticatedGlobalRolesIndexRoute
   '/locations': typeof AuthenticatedLocationsIndexRoute
@@ -455,6 +464,7 @@ export interface FileRoutesById {
   '/_authenticated/companies/': typeof AuthenticatedCompaniesIndexRoute
   '/_authenticated/company-members/': typeof AuthenticatedCompanyMembersIndexRoute
   '/_authenticated/company-roles/': typeof AuthenticatedCompanyRolesIndexRoute
+  '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/file-library/': typeof AuthenticatedFileLibraryIndexRoute
   '/_authenticated/global-roles/': typeof AuthenticatedGlobalRolesIndexRoute
   '/_authenticated/locations/': typeof AuthenticatedLocationsIndexRoute
@@ -505,6 +515,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/company-members'
     | '/company-roles'
+    | '/customers'
     | '/file-library'
     | '/global-roles'
     | '/locations'
@@ -552,6 +563,7 @@ export interface FileRouteTypes {
     | '/companies'
     | '/company-members'
     | '/company-roles'
+    | '/customers'
     | '/file-library'
     | '/global-roles'
     | '/locations'
@@ -602,6 +614,7 @@ export interface FileRouteTypes {
     | '/_authenticated/companies/'
     | '/_authenticated/company-members/'
     | '/_authenticated/company-roles/'
+    | '/_authenticated/customers/'
     | '/_authenticated/file-library/'
     | '/_authenticated/global-roles/'
     | '/_authenticated/locations/'
@@ -760,6 +773,13 @@ declare module '@tanstack/react-router' {
       path: '/file-library'
       fullPath: '/file-library'
       preLoaderRoute: typeof AuthenticatedFileLibraryIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/customers/': {
+      id: '/_authenticated/customers/'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/company-roles/': {
@@ -1037,6 +1057,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompaniesIndexRoute: typeof AuthenticatedCompaniesIndexRoute
   AuthenticatedCompanyMembersIndexRoute: typeof AuthenticatedCompanyMembersIndexRoute
   AuthenticatedCompanyRolesIndexRoute: typeof AuthenticatedCompanyRolesIndexRoute
+  AuthenticatedCustomersIndexRoute: typeof AuthenticatedCustomersIndexRoute
   AuthenticatedFileLibraryIndexRoute: typeof AuthenticatedFileLibraryIndexRoute
   AuthenticatedGlobalRolesIndexRoute: typeof AuthenticatedGlobalRolesIndexRoute
   AuthenticatedLocationsIndexRoute: typeof AuthenticatedLocationsIndexRoute
@@ -1073,6 +1094,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCompaniesIndexRoute: AuthenticatedCompaniesIndexRoute,
   AuthenticatedCompanyMembersIndexRoute: AuthenticatedCompanyMembersIndexRoute,
   AuthenticatedCompanyRolesIndexRoute: AuthenticatedCompanyRolesIndexRoute,
+  AuthenticatedCustomersIndexRoute: AuthenticatedCustomersIndexRoute,
   AuthenticatedFileLibraryIndexRoute: AuthenticatedFileLibraryIndexRoute,
   AuthenticatedGlobalRolesIndexRoute: AuthenticatedGlobalRolesIndexRoute,
   AuthenticatedLocationsIndexRoute: AuthenticatedLocationsIndexRoute,
